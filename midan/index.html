@@ -1,0 +1,290 @@
+
+<html>
+<head>
+<title>Midan</title>
+<!- <script src="jquery.js">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js">
+</script>
+<style>
+canvas
+{
+	position : absolute;
+}
+div
+{
+	position : absolute;
+}
+</style>
+</head>
+
+<body>
+<div id="txt">Loading...</div>
+<canvas id="school" width=400 height=400></canvas>
+
+
+<canvas id="canvas_logo" width=400 height=400></canvas>
+<canvas id="canvas_twitter" width=400 height=400></canvas>
+<canvas id="canvas_github" width=400 height=400></canvas>
+
+
+<script>
+var array=[];
+var curID="school",destX=0,destY=0,sp=20,pass=0,txt="",rot=0;
+var img_logo,img_github,img_twitter;
+//I've explained this on http://yoga1290.blogspot.com/2012/04/simple-html5-charts.html
+function        drawChart(canvasID)
+{
+        var i,sum=0;
+        var txt="";
+        for(i=0;i<array.length;i++)
+                sum+=array[i][0];
+        var canvas = document.getElementById(canvasID);
+        var context = canvas.getContext("2d");
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var radius = Math.min(centerX,centerY);
+        var startingAngle,endingAngle;
+        var lastAngle = 0;
+        var counterclockwise = false;
+        //anything better than black!
+        oldColor="#000000";
+        array.sort();
+        // Draw the 1s with bigger area first
+        for(i=array.length-1;i>=0;i--)
+        {
+                context.beginPath();
+                startingAngle=lastAngle;
+                endingAngle=startingAngle+Math.PI*2*array[i][0]/sum;
+                context.arc(centerX, centerY, radius, startingAngle, endingAngle, counterclockwise);
+                context.closePath();
+                //pick a different random color ,other than the last 1
+                while(context.fillStyle==oldColor)
+                        context.fillStyle="#"+(Math.floor(Math.random()*parseInt("FFFFFF",16))).toString(16).toUpperCase();
+                oldColor=context.fillStyle;
+                
+                txt+="<font size=20 color='"+oldColor+"'>"+array[i][1]+":"+array[i][0]+"</font><br>";
+                
+                context.fill();        
+                context.beginPath(); // begin custom shape
+                context.moveTo(centerX, centerY);
+                context.lineTo(centerX+Math.cos(startingAngle)*radius ,centerY+Math.sin(startingAngle)*radius);
+                context.lineTo(centerX+Math.cos(endingAngle)*radius ,centerY+Math.sin(endingAngle)*radius);
+                context.lineTo(centerX,centerY);
+                context.closePath();
+                context.fill();
+                lastAngle=endingAngle;
+        }
+        return txt;
+}
+function zoomIn()
+{
+// /*
+	$("canvas#school").css('-moz-transform','rotate('+rot+'deg)');
+$("canvas#school").css('-webkit-transform','rotate('+rot+'deg)');
+$("canvas#school").css('-o-transform','rotate('+rot+'deg)');
+$("canvas#school").css('-ms-transform','rotate('+rot+'deg)');
+ 	rot+=10;
+// 	rot%=360;
+// */
+
+	pass=0;
+	var r=Math.min($(window).width(),$(window).height()),w=$("canvas#"+curID).width(),h=$("canvas#"+curID).height();
+	//alert(r+",w="+w+",h="+h+",HW=("+$(window).width()+","+$(window).height()+")\n ("+$("canvas#"+curID).offset().top+","+$("canvas#"+curID).offset().left+")");
+	if(w+sp<r)
+		$("canvas#"+curID).width(w+sp);
+	else if(w-sp>r)
+		$("canvas#"+curID).width(w-sp);
+	else pass++;
+
+	if(h+sp<r)
+		$("canvas#"+curID).height(h+sp);
+	else if(h-sp>r)
+		$("canvas#"+curID).height(h-sp);
+	else	pass++;
+
+	if(($("canvas#"+curID).offset().top+sp+(h>>1))<($(window).height()>>1))
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top+sp), left: $("canvas#"+curID).offset().left });
+	else if(($("canvas#"+curID).offset().top-sp+(h>>1))>($(window).height()>>1))
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top-sp), left: $("canvas#"+curID).offset().left });
+	else	pass++;
+
+	if($("canvas#"+curID).offset().left+sp+(w>>1)<($(window).width()>>1))
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top), left: $("canvas#"+curID).offset().left+sp });
+	else if($("canvas#"+curID).offset().left-sp+(w>>1)>($(window).width()>>1))
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top), left: $("canvas#"+curID).offset().left-sp });
+	else	pass++;
+
+	
+
+	if(pass<4)
+		setTimeout("zoomIn();",50);
+	else
+	{
+		//TODO: load text
+		$("div#txt").html(txt);
+//		$("div#txt").offset({ top: (($(window).height()>>1)-$("div#txt").height()>>1), left: (($(window).width()>>1)-$("div#txt").width()>>1) });
+		$("div#txt").offset({ top: 0, left: 0 });
+		$("div#txt").fadeIn();
+		setTimeout("zoomOut();",2000);
+	}
+}
+function zoomOut()
+{
+// /*
+$("canvas#school").css('-moz-transform','rotate('+rot+'deg)');
+$("canvas#school").css('-webkit-transform','rotate('+rot+'deg)');
+$("canvas#school").css('-o-transform','rotate('+rot+'deg)');
+$("canvas#school").css('-ms-transform','rotate('+rot+'deg)');
+ 	rot-=10;
+ 	// */
+// 	rot= rot<0 ? 360:rot;
+
+
+
+	pass=0;
+
+//	$("div#txt").offset({ top: $("canvas#"+curID).offset().top, left: $("canvas#"+curID).offset().left });
+
+	if($("canvas#"+curID).width()+sp<40)
+		$("canvas#"+curID).width($("canvas#"+curID).width()+sp);
+	else if($("canvas#"+curID).width()-sp>40)
+		$("canvas#"+curID).width($("canvas#"+curID).width()-sp);
+	else pass++;
+
+	if($("canvas#"+curID).height()+sp<40)
+		$("canvas#"+curID).height($("canvas#"+curID).height()+sp);
+	else if($("canvas#"+curID).height()-sp>40)
+		$("canvas#"+curID).height($("canvas#"+curID).height()-sp);
+	else	pass++;
+
+	if($("canvas#"+curID).offset().top+sp+($("canvas#"+curID).width()>>1)<destX)
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top+sp), left: $("canvas#"+curID).offset().left });
+	else if($("canvas#"+curID).offset().top-sp+($("canvas#"+curID).width()>>1)>destX)
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top-sp), left: $("canvas#"+curID).offset().left });
+	else	pass++;
+
+	if($("canvas#"+curID).offset().left+($("canvas#"+curID).height()>>1)+sp<destY)
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top), left: $("canvas#"+curID).offset().left+sp });
+	else if($("canvas#"+curID).offset().left+($("canvas#"+curID).height()>>1)-sp>destY)
+		$("canvas#"+curID).offset({ top: ($("canvas#"+curID).offset().top), left: $("canvas#"+curID).offset().left-sp });
+	else	pass++;
+
+	if(pass<4)
+		setTimeout("zoomOut();",50);
+	else
+	{
+		resetchart();
+//		zoomIn();
+	}
+}
+var chartsleft=1;
+function resetchart()
+{
+	$("canvas#"+curID).hide();
+
+	if(chartsleft<=0)
+	{
+//		img.onload =function()
+//		{
+			$("div#txt").fadeOut(4000);
+			
+//			$("canvas#school").offset({ top: ($(document).height()/2)-185, left: ($(document).width()/2)-100 });
+			
+//			$("canvas#school").width(400);
+//			$("canvas#school").height(400);
+//			$("canvas#school").offset({ top: 0, left: 0 });
+			document.getElementById("canvas_logo").getContext("2d").drawImage(img_logo,0,0);
+//			$("canvas#school").fadeIn(2000);
+///*			
+			$("canvas#canvas_github").hide();
+			$("canvas#canvas_twitter").hide();
+			document.getElementById("canvas_github").getContext("2d").drawImage(img_github,0,0);
+			document.getElementById("canvas_twitter").getContext("2d").drawImage(img_twitter,0,0);
+			$("canvas#canvas_github").fadeIn(1000);
+			$("canvas#canvas_twitter").fadeIn(1000);
+			
+//			$("canvas#"+curID).mousedown(function(e){
+//				top.location.href='https://www.facebook.com/dialog/oauth?client_id=515920055103374&redirect_uri=http://yoga1290.appspot.com/oauth/facebook/callback/&scope=user_about_me,email,user_education_history&state=midan';
+//			});
+			
+			$("canvas#canvas_logo").fadeIn(2000);
+			animate_leaves(0);
+			// */
+//		}
+		return;
+	}
+
+	chartsleft--;
+	array= majorsStat;//schoolsStat;
+	$("div#txt").fadeOut(4000);
+	setTimeout('txt=drawChart(curID);$("canvas#"+curID).fadeIn(1000);',1500);
+	setTimeout("zoomIn();",2000);
+}
+function animate_leaves(t)
+{
+	$("canvas#canvas_twitter").offset({ top: t*sp, left: 0 });
+	$("canvas#canvas_github").offset({ top: t*sp, left: t*sp });
+	if(t*sp<$("canvas#canvas_logo").height())
+		setTimeout('animate_leaves('+(t+sp)+');',80);
+}
+var schools={};
+var majors={};
+var majors_keys=[];
+var schools_keys=[];
+var majorsStat=[];
+var schoolsStat=[];
+function main()
+{
+///*
+	$.get(location.protocol+"//yoga1290.appspot.com/midan/stat/major",function(e){
+		
+		var lines=e.split("\n");
+		var i;
+		for(i=0;i<lines.length-3;i+=3)
+		{
+			if(schools[lines[i]]==undefined)
+			{
+				schools[lines[i]]=0;
+				schools_keys.push(lines[i]);
+			}
+			if(majors[lines[i+1]]==undefined)
+			{
+			
+				majors[lines[i+1]]=0;
+				majors_keys.push(lines[i+1]);
+			}
+			schools[lines[i]]+=parseInt(lines[i+2]);
+			majors[lines[i+1]]+=parseInt(lines[i+2]);
+		}
+		for(i=0;i<majors_keys.length;i++)
+			majorsStat.push([majors[majors_keys[i]] ,majors_keys[i]]);
+		
+		for(i=0;i<schools_keys.length;i++)
+			schoolsStat.push([	schools[schools_keys[i]],schools_keys[i]		]);
+		
+
+		$("canvas#school").hide();
+		$("canvas#school").fadeIn(2000);
+
+		array=schoolsStat;
+		txt=drawChart("school");
+		curID="school";
+		destX=$(window).height()>>1;
+		destY=$(window).width()>>1;
+		zoomIn();
+		
+		// /*
+		img_logo = new Image();
+		img_logo.src = location.protocol+"//yoga1290.appspot.com/midan/thankyou.png";
+		img_github = new Image();
+		img_github.src = location.protocol+"//a.yfrog.com/img532/4240/s9pm.png";	
+		img_twitter = new Image();
+		img_twitter.src = location.protocol+"//a.yfrog.com/img739/7145/udit.png";
+		// */
+	});
+
+}
+$(document).ready(main);
+</script>
+</body>
+</html>
